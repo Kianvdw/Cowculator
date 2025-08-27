@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../core/unit_settings.dart';
+import '../../../core/units.dart';
 
 class YamatoScreen extends StatefulWidget {
   const YamatoScreen({super.key});
@@ -12,21 +15,68 @@ class _YamatoScreenState extends State<YamatoScreen> {
   final TextEditingController _lengthController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _depthController = TextEditingController();
-  double? _estimatedWeight;
 
-  void _calculateWeight() {
-    final girth = double.tryParse(_girthController.text);
-    final length = double.tryParse(_lengthController.text);
-    final height = double.tryParse(_heightController.text);
-    final depth = double.tryParse(_depthController.text);
+  double? _estimatedDisplayWeight; // kg or lb depending on current unit
+  String? _error;
 
-    if (girth != null && length != null && height != null && depth != null) {
-      // Example Yamato formula (you may substitute with actual coefficients)
-     final weight = -173.5 + (1.2 * girth) + (1.1 * length) + (0.75 * height) + (0.88 * depth);
-      setState(() => _estimatedWeight = weight);
-    } else {
-      setState(() => _estimatedWeight = null);
+  // Yamato calculation should operate in METRIC ONLY.
+  // Inputs (all in cm): girth, length, height, depth -> returns kg.
+  // Using your example coefficients; replace with validated ones when ready.
+  double _yamatoKg({
+    required double girthCm,
+    required double lengthCm,
+    required double heightCm,
+    required double depthCm,
+  }) {
+    // Example: -173.5 + (1.2*girth) + (1.1*length) + (0.75*height) + (0.88*depth)
+    return -173.5 +
+        (1.2 * girthCm) +
+        (1.1 * lengthCm) +
+        (0.75 * heightCm) +
+        (0.88 * depthCm);
+  }
+
+  void _calculateWeight(BuildContext context) {
+    setState(() {
+      _error = null;
+      _estimatedDisplayWeight = null;
+    });
+
+    final unitSettings = context.read<UnitSettings>();
+
+    final girthUi  = double.tryParse(_girthController.text.trim());
+    final lengthUi = double.tryParse(_lengthController.text.trim());
+    final heightUi = double.tryParse(_heightController.text.trim());
+    final depthUi  = double.tryParse(_depthController.text.trim());
+
+    // Basic validation
+    if ([girthUi, lengthUi, heightUi, depthUi].any((v) => v == null)) {
+      setState(() => _error = "Please enter valid numbers for all measurements.");
+      return;
     }
+    if (girthUi! <= 0 || lengthUi! <= 0 || heightUi! <= 0 || depthUi! <= 0) {
+      setState(() => _error = "Measurements must be greater than zero.");
+      return;
+    }
+
+    // Convert UI -> METRIC (cm)
+    final girthCm  = unitSettings.uiLengthToMetric(girthUi);
+    final lengthCm = unitSettings.uiLengthToMetric(lengthUi);
+    final heightCm = unitSettings.uiLengthToMetric(heightUi);
+    final depthCm  = unitSettings.uiLengthToMetric(depthUi);
+
+    // Calculate in kg
+    final weightKg = _yamatoKg(
+      girthCm: girthCm,
+      lengthCm: lengthCm,
+      heightCm: heightCm,
+      depthCm: depthCm,
+    );
+
+    // Convert to display unit
+    final display = unitSettings.isMetric ? weightKg : Units.kgToLb(weightKg);
+
+    setState(() => _estimatedDisplayWeight = display);
   }
 
   @override
@@ -40,6 +90,16 @@ class _YamatoScreenState extends State<YamatoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final unitSettings = context.watch<UnitSettings>();
+    final lengthUnit = Units.lengthLabel(unitSettings.system); // cm or in
+    final weightUnit = Units.weightLabel(unitSettings.system); // kg or lb
+
+    InputDecoration _dec(String label) => InputDecoration(
+          labelText: "$label ($lengthUnit)",
+          border: const OutlineInputBorder(),
+          hintText: unitSettings.isMetric ? "e.g., 120" : "e.g., 47.2",
+        );
+
     return Scaffold(
       appBar: AppBar(title: const Text("Yamato 4-Variable Formula")),
       body: Padding(
@@ -59,50 +119,50 @@ class _YamatoScreenState extends State<YamatoScreen> {
               "- Ensure the animal is standing straight and calm.",
             ),
             const SizedBox(height: 20),
+
+            // Heart Girth
             TextField(
               controller: _girthController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Heart Girth (cm)',
-                border: OutlineInputBorder(),
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: _dec('Heart Girth'),
             ),
             const SizedBox(height: 16),
+
+            // Body Length
             TextField(
               controller: _lengthController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Body Length (cm)',
-                border: OutlineInputBorder(),
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: _dec('Body Length'),
             ),
             const SizedBox(height: 16),
+
+            // Height
             TextField(
               controller: _heightController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Height (cm)',
-                border: OutlineInputBorder(),
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: _dec('Height'),
             ),
             const SizedBox(height: 16),
+
+            // Chest Depth
             TextField(
               controller: _depthController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Chest Depth (cm)',
-                border: OutlineInputBorder(),
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: _dec('Chest Depth'),
             ),
             const SizedBox(height: 20),
+
             ElevatedButton(
-              onPressed: _calculateWeight,
+              onPressed: () => _calculateWeight(context),
               child: const Text('Estimate Weight'),
             ),
             const SizedBox(height: 20),
-            if (_estimatedWeight != null)
+
+            if (_error != null)
+              Text(_error!, style: const TextStyle(color: Colors.red))
+            else if (_estimatedDisplayWeight != null)
               Text(
-                'Estimated Weight: ${_estimatedWeight!.toStringAsFixed(2)} kg',
+                'Estimated Weight: ${_estimatedDisplayWeight!.toStringAsFixed(2)} $weightUnit',
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               )
             else

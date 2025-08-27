@@ -59,6 +59,7 @@ class FormulaSelectorScreen extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         title: Text(title, style: TextStyle(color: textColor)),
+        // ignore: deprecated_member_use
         subtitle: Text(description, style: TextStyle(color: textColor.withOpacity(0.7))),
         trailing: Icon(Icons.arrow_forward_ios, color: textColor),
         onTap: () => Navigator.push(

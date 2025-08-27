@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'core/unit_settings.dart';
 import 'screens/animal_selector_screen.dart';
-// import 'screens/settings_screen.dart';
 
 void main() {
-  runApp(const CowculatorRoot());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => UnitSettings(),
+      child: const CowculatorRoot(),
+    ),
+  );
 }
 
 class CowculatorRoot extends StatefulWidget {
@@ -43,8 +50,8 @@ class CowculatorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Cowculator',
-      themeMode: themeMode,
       debugShowCheckedModeBanner: false,
+      themeMode: themeMode,
       home: AnimalSelectorScreen(
         onThemeChanged: onThemeChanged,
         themeMode: themeMode,
@@ -68,7 +75,7 @@ class CowculatorApp extends StatelessWidget {
             backgroundColor: const Color(0xFFD6D6D6),
             foregroundColor: Colors.black,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
+            shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(20)),
             ),
           ),
@@ -93,7 +100,7 @@ class CowculatorApp extends StatelessWidget {
             backgroundColor: const Color(0xFF3A3A3A),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
+            shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.all(Radius.circular(20)),
             ),
           ),
