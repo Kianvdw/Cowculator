@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'cow_formula_selector.dart';
 import 'settings_screen.dart';
+import 'horse_formula_selector.dart';
 
 class AnimalSelectorScreen extends StatelessWidget {
   final void Function(ThemeMode) onThemeChanged;
@@ -47,6 +48,7 @@ class AnimalSelectorScreen extends StatelessWidget {
                 style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 32),
+
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -57,6 +59,18 @@ class AnimalSelectorScreen extends StatelessWidget {
                 child: const Text('Cow'),
               ),
               const SizedBox(height: 16),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HorseFormulaSelectorScreen()),
+                  );
+                },
+                child: const Text('Horse'),
+              ),
+              const SizedBox(height: 16),
+
               ElevatedButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -66,6 +80,7 @@ class AnimalSelectorScreen extends StatelessWidget {
                 child: const Text('Sheep'),
               ),
               const SizedBox(height: 16),
+
               ElevatedButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(

@@ -10,8 +10,13 @@ class UnitSettings extends ChangeNotifier {
     _load();
   }
 
+  // Existing API (kept)
   UnitSystem get system => _system;
   bool get isMetric => _system == UnitSystem.metric;
+
+  // ✅ Added: unified getters/setters used across the app
+  UnitSystem get unitSystem => _system;                 // alias for consistency
+  bool get useMetric => _system == UnitSystem.metric;   // what horse screens read
 
   set system(UnitSystem s) {
     if (_system != s) {
@@ -20,6 +25,13 @@ class UnitSettings extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // ✅ Added: convenience setter & toggle (optional but handy)
+  void setUseMetric(bool value) =>
+      system = value ? UnitSystem.metric : UnitSystem.imperial;
+
+  void toggle() =>
+      system = (useMetric ? UnitSystem.imperial : UnitSystem.metric);
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
